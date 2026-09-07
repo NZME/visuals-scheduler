@@ -358,6 +358,17 @@ module.exports = async function handler(req, res) {
         return;
       }
 
+      if (arg === 'tomorrow') {
+        const ok = await triggerWorkflow('manual-draft-trigger');
+        res.json({
+          response_type: 'ephemeral',
+          text: ok
+            ? "\u2705 Posting tomorrow's schedule to *#visuals-team-chat-24* now."
+            : "\u26a0\ufe0f Something went wrong triggering the daily draft \u2014 check the Actions tab on GitHub.",
+        });
+        return;
+      }
+
       // No argument — post today's jobs
       await redisSet('pending_today_jobs', { requested_at: new Date().toISOString() });
       res.json({
