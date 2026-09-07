@@ -23,7 +23,7 @@
 
 const crypto = require('crypto');
 
-const GITHUB_REPO         = "Milla-Duke/visuals-scheduler";
+const GITHUB_REPO         = "NZME/visuals-scheduler";
 const TEAMUP_VISUALS_ID   = 11087400;
 const TEAMUP_CALENDAR_KEY = "ksi7k2xr9brt5tn2ac";
 const TEAMUP_LINK_KEY     = "q1rqrs";  // shared calendar key for building event links

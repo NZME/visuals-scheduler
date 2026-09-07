@@ -15,7 +15,7 @@
  *   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST token
  */
 
-const GITHUB_REPO = "Milla-Duke/visuals-scheduler";
+const GITHUB_REPO = "NZME/visuals-scheduler";
 
 module.exports.config = {
   api: { bodyParser: false },
