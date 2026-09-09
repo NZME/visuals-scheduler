@@ -363,7 +363,7 @@ def extract_field(text, field_name, fields_list=None):
     if match:
         value = match.group(1).strip()
         # If the value looks like a field label, the field was empty — return ""
-        if re.match(r'^\*[^*]+\*', value):
+        if re.fullmatch(r'\*[^*]+\*', value):
             return ""
         return _clean(value)
 
@@ -372,7 +372,7 @@ def extract_field(text, field_name, fields_list=None):
     match = re.search(pattern_old, text, re.DOTALL | re.IGNORECASE)
     if match:
         value = match.group(1).strip()
-        if re.match(r'^\*[^*]+\*', value):
+        if re.fullmatch(r'\*[^*]+\*', value):
             return ""
         return _clean(value)
 
@@ -564,7 +564,7 @@ def extract_livestream_field(text, field_name):
     if match:
         value = match.group(1).strip()
         # If the value looks like a field label, the field was empty
-        if re.match(r'^\*[^*]+\*', value):
+        if re.fullmatch(r'\*[^*]+\*', value):
             return ""
         # Resolve user mentions to display names
         value = re.sub(r'<@[A-Z0-9]+\|([^>]+)>', r'@\1', value)
