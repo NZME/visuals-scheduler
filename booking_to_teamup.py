@@ -84,6 +84,7 @@ _NAME_TO_SLACK_ID = {
     "Darryn Fouhy":        "U08DYNFE4BT",
     "Garth Bray":          "U07C7N4EEKS",
     "Katie Oliver":        "U06Q0JLGKTN",
+    "Katie Bradford":      "U0ATPALN2FM",
 }
 SLACK_ID_TO_NAME = {v: k for k, v in _NAME_TO_SLACK_ID.items()}
 

@@ -109,6 +109,7 @@ NAME_TO_SLACK_ID = {
     "Darryn Fouhy":        "U08DYNFE4BT",
     "Garth Bray":          "U07C7N4EEKS",
     "Katie Oliver":        "U06Q0JLGKTN",
+    "Katie Bradford":      "U0ATPALN2FM",
 }
 # Only these team members appear in the shift times block
 SHIFT_TIME_MEMBERS = [
