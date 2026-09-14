@@ -359,7 +359,7 @@ def extract_field(text, field_name, fields_list=None):
     # Try new format first: plain label (optionally bold via asterisks), value on next line.
     # The value must not start with a bold field label (*...*) — that would mean the field
     # is empty and we've grabbed the next field's label instead.
-    pattern_new = rf"(?:^|\n)\*?{re.escape(field_name)}\??\*?\s*\n(.*?)(?=\n\*?(?:{next_fields})\??\*?\s*\n|$)"
+    pattern_new = rf"(?:^|\n)\*?{re.escape(field_name)}\??\*?\s*\n(.*?)(?=\n?\*?(?:{next_fields})\??\*?\s*\n|$)"
     match = re.search(pattern_new, text, re.DOTALL | re.IGNORECASE)
     if match:
         value = match.group(1).strip()
@@ -560,7 +560,7 @@ def _get_livestream_title(text):
 
 def extract_livestream_field(text, field_name):
     next_fields = "|".join(re.escape(f) for f in LIVESTREAM_FIELDS if f != field_name)
-    pattern = rf"\*?{re.escape(field_name)}\*?\s*[:\?]?\*?\s*\n(.*?)(?=\n\*?(?:{next_fields})\*?\s*[:\?]?\*?\s*\n|$)"
+    pattern = rf"\*?{re.escape(field_name)}\*?\s*[:\?]?\*?\s*\n(.*?)(?=\n?\*?(?:{next_fields})\*?\s*[:\?]?\*?\s*\n|$)"
     match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
     if match:
         value = match.group(1).strip()
