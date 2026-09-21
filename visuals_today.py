@@ -63,7 +63,8 @@ NAME_TO_SLACK_ID = {
     "Mark Mitchell":       "U4AJQH95Y",
     "Ella Wilks":          "U4BV744Q5",
     "Hayden Woodward":     "U03R4TRKTRR",
-    "Emma Tavai":          "U0BFVEELEP3",
+    "Daniel Voice":        "U0C3KA29VU0",
+    "Sam Ardern":          "U0C2P0T9XL6",
     "Michael Morrah":      "U07B4DXQ95H",
     "Sarah Bristow":       "U07BTB113U0",
     "Mike Scott":          "U4PLY5LMV",
@@ -92,6 +93,8 @@ NAME_TO_SLACK = {
     "Ella Wilks":          "Ella Wilks",
     "Hayden Woodward":     "Hayden",
     "Emma Tavai":          "Emma Tavai",
+    "Daniel Voice":        "Daniel Voice",
+    "Sam Ardern":          "Sam Ardern",
     "Michael Morrah":      "Michael Morrah",
     "Sarah Bristow":       "Sarah Bristow",
     "Mike Scott":          "Mike Scott",
@@ -120,6 +123,8 @@ SHIFT_TIME_MEMBERS = [
     "Ella Wilks",
     "Hayden Woodward",
     "Emma Tavai",
+    "Daniel Voice",
+    "Sam Ardern",
 ]
 
 # Known team member names (for away entry detection)
