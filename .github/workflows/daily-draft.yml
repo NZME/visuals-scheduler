@@ -35,9 +35,14 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           TEAMUP_API_KEY: ${{ secrets.TEAMUP_API_KEY }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          # Used only for the once-per-day dedupe lock (see acquire_daily_post_lock
-          # in visuals_daily_draft.py) — stops a delayed duplicate cron trigger
-          # from posting the draft twice.
+          # Set on cron-job.org's 6:45pm repository_dispatch hit via
+          # client_payload: {"source": "cron"} — empty for every other
+          # trigger (manual workflow_dispatch, or the /visuals-update
+          # tomorrow slash command, which sends no client_payload). Used by
+          # acquire_daily_post_lock() in visuals_daily_draft.py to apply the
+          # once-per-day dedupe lock only to the automated cron hit, not to
+          # deliberate manual/Slack runs.
+          TRIGGER_SOURCE: ${{ github.event.client_payload.source }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: python visuals_daily_draft.py

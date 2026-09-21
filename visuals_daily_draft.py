@@ -10,7 +10,11 @@ SETUP:
        { "slack_bot_token": "xoxb-your-token-here" }
   3. Run manually to test:
        python3 visuals_daily_draft.py
-  4. The schedule runs automatically via GitHub Actions at 6:45pm Mon-Fri.
+  4. In production, cron-job.org POSTs to GitHub's /dispatches API at
+     6:45pm NZ time to fire daily-draft.yml's repository_dispatch event
+     (manual-draft-trigger) — there is no native GitHub Actions
+     `schedule:` trigger. See daily-draft.yml and the migration
+     reference doc for the full trigger chain.
 """
 import os
 import re
@@ -631,16 +635,27 @@ def acquire_daily_post_lock(date_obj):
     """
     Atomically claim the "already posted today" flag in Upstash Redis.
 
-    Why this exists: daily-draft.yml has two schedule cron entries (one for
-    NZST, one for NZDT) so daylight saving is handled without manual changes.
-    Only one of them is "correct" at any given time of year — the other is
-    supposed to be caught by the hour check in main() and exit quietly. But
-    GitHub Actions can delay a scheduled run by many minutes (especially
-    around common trigger times like :45 past the hour, when lots of
-    workflows across GitHub fire at once). If the "wrong" cron run gets
-    delayed past the top of the 6pm NZ hour, it slips past the hour check
-    and posts a duplicate. This lock is the actual guarantee of "once per
-    day", independent of timing jitter.
+    Why this exists (history): daily-draft.yml used to have two `schedule:`
+    cron entries (one for NZST, one for NZDT) so daylight saving was handled
+    without manual changes. Only one was "correct" at any given time of
+    year — the other was supposed to be caught by the hour check in main()
+    and exit quietly. But GitHub Actions could delay a scheduled run by many
+    minutes (especially around common trigger times like :45 past the hour),
+    so a delayed "wrong" cron run could slip past the hour check and post a
+    duplicate. This lock was the actual once-per-day guarantee, independent
+    of that timing jitter.
+
+    UPDATED (Sept 2026): the `schedule:` block was removed from daily-draft.yml
+    to fix that duplicate-posting bug — the 6:45pm trigger is now external
+    (cron-job.org calling repository_dispatch directly), so GITHUB_EVENT_NAME
+    is never "schedule" anymore. The caller in main() now gates on
+    TRIGGER_SOURCE == "cron" instead: cron-job.org's dispatch carries
+    client_payload: {"source": "cron"}, which daily-draft.yml passes through
+    as the TRIGGER_SOURCE env var. Every other trigger (manual
+    workflow_dispatch, or the /visuals-update tomorrow slash command) sends
+    no client_payload, so TRIGGER_SOURCE is empty for them and this lock is
+    skipped — that's what lets it catch a delayed/duplicate cron hit without
+    also blocking a deliberate manual re-post on the same day.
 
     Returns True if this run just claimed the lock (i.e. it should proceed
     to post). Returns False if the lock was already held by an earlier run
@@ -709,32 +724,40 @@ def post_to_slack(message, channel):
 # ═══════════════════════════════════════════════════════════════════════════════
 def main():
     # ── TIME GUARD ─────────────────────────────────────────────────────────────
-    # Two cron entries in daily-draft.yml cover NZST and NZDT, but both fire
-    # every day. We only want to post during the 6pm hour NZ time — the other
-    # trigger lands outside that window and exits silently.
-    # Manual runs (workflow_dispatch) and slash command triggers
-    # (repository_dispatch) always post immediately, bypassing the time check.
+    # Only the automated cron-job.org hit should be restricted to the 6pm NZ
+    # hour — manual workflow_dispatch runs and the /visuals-update tomorrow
+    # slash command are deliberate and should always post immediately. We
+    # used to gate this on GITHUB_EVENT_NAME == "schedule", back when
+    # daily-draft.yml had a native `schedule:` trigger with two cron entries
+    # (NZST + NZDT) that both fired every day. That block was removed
+    # (Sept 2026) — the 6:45pm trigger is now external (cron-job.org calling
+    # repository_dispatch directly), which is indistinguishable from a
+    # manual/Slack repository_dispatch by event type alone. So instead we key
+    # off TRIGGER_SOURCE, which daily-draft.yml sets from cron-job.org's
+    # client_payload ({"source": "cron"}) — present only on the automated hit.
     nz = pytz.timezone("Pacific/Auckland")
     now_nz = datetime.now(nz)
-    # For scheduled runs: only post during the 6pm NZ hour.
-    # workflow_dispatch and repository_dispatch runs bypass this via the
-    # GITHUB_EVENT_NAME env var passed explicitly from the workflow.
-    event_name = os.environ.get("GITHUB_EVENT_NAME", "workflow_dispatch")
-    if event_name == "schedule" and now_nz.hour != 18:
+    # workflow_dispatch and the Slack-triggered repository_dispatch send no
+    # client_payload, so TRIGGER_SOURCE is empty for them and this check —
+    # and the dedupe lock below — never apply.
+    trigger_source = os.environ.get("TRIGGER_SOURCE", "")
+    if trigger_source == "cron" and now_nz.hour != 18:
         print(f"Skipping — it's {now_nz.strftime('%H:%M')} NZ time, outside the 6pm posting window.")
         sys.exit(0)
     # ──────────────────────────────────────────────────────────────────────────
 
-    # ── DUPLICATE-POST GUARD (scheduled runs only) ────────────────────────────
-    # The hour check above can still let a delayed cron trigger through if it
+    # ── DUPLICATE-POST GUARD (automated cron hit only) ────────────────────────
+    # The hour check above can still let a delayed cron hit through if it
     # lands late enough to cross into the 6pm NZ hour (see
     # acquire_daily_post_lock for the full explanation). This Redis lock is
-    # the actual once-per-day guarantee. Manual runs and slash-command
-    # triggers are deliberate, so they bypass this and always post.
-    if event_name == "schedule":
+    # the actual once-per-day guarantee, and — like the hour check — only
+    # applies when TRIGGER_SOURCE == "cron". Manual runs and slash-command
+    # triggers are deliberate, so they bypass this and always post, even if
+    # the automated draft already went out today.
+    if trigger_source == "cron":
         today_nz = now_nz.date()
         if not acquire_daily_post_lock(today_nz):
-            print(f"Skipping — a scheduled run already posted today's draft ({today_nz.isoformat()} NZ). "
+            print(f"Skipping — the automated cron run already posted today's draft ({today_nz.isoformat()} NZ). "
                   f"This is likely a delayed duplicate cron trigger.")
             sys.exit(0)
     # ──────────────────────────────────────────────────────────────────────────
