@@ -47,6 +47,7 @@ const NAME_TO_SLACK_ID = {
   "Mark Mitchell":       "U4AJQH95Y",
   "Ella Wilks":          "U4BV744Q5",
   "Hayden Woodward":     "U03R4TRKTRR",
+  "Emma Tavai":          "U0BFVEELEP3",
   "Daniel Voice":        "U0C3KA29VU0",
   "Sam Ardern":          "U0C2P0T9XL6",
   "Michael Morrah":      "U07B4DXQ95H",
