@@ -1,0 +1,37 @@
+name: Roster Check
+
+# Guards against a repeat of the 2026-09-21 incident: an edit to
+# NAME_TO_SLACK_ID that replaces an existing name instead of adding
+# alongside it. See check_roster.py for what this actually checks.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/slack.js"
+      - "assignment_notifier.py"
+      - "booking_to_teamup.py"
+      - "visuals_daily_draft.py"
+      - "visuals_monday_draft.py"
+      - "visuals_sunday_draft.py"
+      - "visuals_today.py"
+      - "check_roster.py"
+  workflow_dispatch:
+
+jobs:
+  check-roster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          # Need HEAD^ available to diff against.
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check no one silently disappeared from the roster
+        run: python3 check_roster.py
