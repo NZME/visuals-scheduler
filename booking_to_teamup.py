@@ -12,6 +12,7 @@ Requirements:
 import os
 import re
 import sys
+import html
 import json
 import requests
 from datetime import datetime, timedelta
@@ -354,7 +355,7 @@ def extract_field(text, field_name, fields_list=None):
         value = re.sub(r'<@([A-Z0-9]+)>', _replace_bare_mention, value)
         value = re.sub(r'<(https?://[^|>]+)\|([^>]+)>', r'\2', value)
         value = re.sub(r'<(https?://[^>]+)>', r'\1', value)
-        return value.strip()
+        return html.unescape(value.strip())
 
     next_fields = "|".join(re.escape(f) for f in fields_list if f != field_name)
 
@@ -578,7 +579,7 @@ def extract_livestream_field(text, field_name):
         value = re.sub(r'<@([A-Z0-9]+)>', _replace_bare_mention, value)
         value = re.sub(r'<(https?://[^|>]+)\|([^>]+)>', r'\2', value)
         value = re.sub(r'<(https?://[^>]+)>', r'\1', value)
-        return value.strip()
+        return html.unescape(value.strip())
     return ""
 
 # Display names for TeamUp notes — maps field names to clean labels
