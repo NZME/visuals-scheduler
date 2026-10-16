@@ -606,7 +606,7 @@ def build_draft_message(target_dates, subcalendar_id, editing_subcalendar_id=Non
         away_names = get_away_names(all_events)
         if away_names:
             lines.append(f"Away: {', '.join(away_names)}")
-        lines.append("")
+            lines.append("")
         day_shift_lines = []
         for name in sorted(SHIFT_TIME_MEMBERS, key=lambda n: shift_sort_key(shifts, n, d)):
             if (name, d) not in shifts:

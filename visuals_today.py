@@ -323,7 +323,7 @@ def build_message(today):
 
     # Header
     today_label = today.strftime("%A %-d %B")
-    lines.append(f"*{today_label} — jobs update*")
+    lines.append(f"*{today_label} — job updates*")
     lines.append("")
 
     # ── Visuals jobs ──────────────────────────────────────────────────────────
@@ -337,7 +337,7 @@ def build_message(today):
     away_names = [n for n in away_names if n]
     if away_names:
         lines.append(f"Away: {', '.join(away_names)}")
-    lines.append("")
+        lines.append("")
 
     # Shift times — sorted by earliest start, skip anyone not in CSV
     for name in sorted(SHIFT_TIME_MEMBERS, key=lambda n: shift_sort_key(shifts, n, today)):

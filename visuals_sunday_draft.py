@@ -365,7 +365,7 @@ def build_message(sunday):
     away_names = [n for n in away_names if n]
     if away_names:
         lines.append(f"Away: {', '.join(away_names)}")
-    lines.append("")
+        lines.append("")
 
     # Shift times — sorted by earliest start, skip anyone not in CSV
     for name in sorted(SHIFT_TIME_MEMBERS, key=lambda n: shift_sort_key(shifts, n, sunday)):
