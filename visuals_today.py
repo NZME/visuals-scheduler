@@ -126,6 +126,7 @@ SHIFT_TIME_MEMBERS = [
     "Emma Tavai",
     "Daniel Voice",
     "Sam Ardern",
+    "Mike Scott",
 ]
 
 # Known team member names (for away entry detection)

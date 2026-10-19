@@ -79,10 +79,10 @@ NAME_TO_SLACK = {
     "Emma Tavai":          "Emma Tavai",
     "Daniel Voice":        "Daniel Voice",
     "Sam Ardern":          "Sam Ardern",
+    "Mike Scott":          "Mike Scott",
     # Extended group — may appear in TeamUp job entries but don't get shift times
     "Michael Morrah":      "Michael Morrah",
     "Sarah Bristow":       "Sarah Bristow",
-    "Mike Scott":          "Mike Scott",
     "Simon Plumb":         "simon.plumb",
     "Dallas Smith":        "dallas.smith",
     "Darryn Fouhy":        "Darryn Fouhy",
@@ -140,6 +140,7 @@ SHIFT_TIME_MEMBERS = [
     "Emma Tavai",
     "Daniel Voice",
     "Sam Ardern",
+    "Mike Scott",
 ]
 # ═══════════════════════════════════════════════════════════════════════════════
 # HUMANITY SHIFT LOADER
