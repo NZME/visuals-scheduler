@@ -167,7 +167,7 @@ def load_humanity_shifts():
                 start_t  = row.get("start_time", "").strip()
                 end_t    = row.get("end_time", "").strip()
                 try:
-                    d = datetime.strptime(date_str, "%d-%m-%Y").date()
+                    d = datetime.strptime(date_str.replace("/", "-"), "%d-%m-%Y").date()  # accepts 22-10-2026 or 22/10/2026
                 except ValueError:
                     continue
                 key = (name, d)
