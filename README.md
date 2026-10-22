@@ -9,7 +9,7 @@ For a deeper walkthrough of every component and how to make common changes, see 
 - **Daily schedule draft** — posts tomorrow's jobs, shift times, Studio bookings and edits to `#visuals-team-chat-24` at 6:45pm every weekday (Fridays post Sat + Sun + Mon combined).
 - **Booking → calendar** — when someone submits the booking form or live stream form in `#visual-crew-bookings`, automatically creates a TeamUp entry and replies with a link.
 - **Assignment notifications** — when a photographer/videographer is assigned to a job in TeamUp, DMs and thread-replies the requester and the assignee.
-- **On-demand snapshots** — `/visuals-update`, `/visuals-update monday`, `/visuals-update sunday`, and `/visuals-update tomorrow` post jobs snapshots or re-trigger the daily draft in Slack on request. See **Slash commands** below for details.
+- **On-demand snapshots** — `/visuals-update`, `/visuals-update monday`, `/visuals-update sunday`, and `/visuals-update tomorrow` post preview snapshots to the drafts channel on request. See **Slash commands** below for details.
 
 ## Slash commands
 
@@ -20,7 +20,7 @@ All run as `/visuals-update` from any Slack channel:
 | `/visuals-update` | Snapshot of today's jobs, shift times, Studio bookings and edits | `#visuals-daily-schedule-message-drafts` (preview only) |
 | `/visuals-update monday` | Snapshot of the upcoming Monday | `#visuals-daily-schedule-message-drafts` (preview only) |
 | `/visuals-update sunday` | Snapshot of the upcoming Sunday | `#visuals-daily-schedule-message-drafts` (preview only) |
-| `/visuals-update tomorrow` | Re-triggers the real daily draft (tomorrow's jobs) \u2014 use when late job requests come in after the 6:45pm post has already gone out | `#visuals-team-chat-24` (the live channel, not a preview) |
+| `/visuals-update tomorrow` | Re-generates the daily draft (tomorrow's jobs) on demand, e.g. to preview changes before/after the 6:45pm post | `#visuals-daily-schedule-message-drafts` (preview only — post it to `#visuals-team-chat-24` yourself, or use the GitHub Actions "Run workflow" button, if you need a real live re-post) |
 
 ## How the pieces fit together
 

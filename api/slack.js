@@ -362,11 +362,16 @@ module.exports = async function handler(req, res) {
       }
 
       if (arg === 'tomorrow') {
-        const ok = await triggerWorkflow('manual-draft-trigger');
+        // client_payload.source: 'slack-tomorrow' lets visuals_daily_draft.py
+        // tell this on-demand Slack trigger apart from the real 6:45pm
+        // cron-job.org post (source: 'cron') and the manual GitHub Actions
+        // "Run workflow" button (no client_payload) — so only this one posts
+        // to the drafts channel instead of the live #visuals-team-chat-24.
+        const ok = await triggerWorkflow('manual-draft-trigger', { source: 'slack-tomorrow' });
         res.json({
           response_type: 'ephemeral',
           text: ok
-            ? "\u2705 Posting tomorrow's schedule to *#visuals-team-chat-24* now."
+            ? "\u2705 Posting tomorrow's schedule to *#visuals-daily-schedule-message-drafts* now."
             : "\u26a0\ufe0f Something went wrong triggering the daily draft \u2014 check the Actions tab on GitHub.",
         });
         return;
