@@ -46,11 +46,6 @@ TEAMUP_STUDIO_ID = 11087384  # Studio subcalendar (hardcoded — not name-looked
 # Slack token — reads from config.json, falls back to environment variable
 SLACK_BOT_TOKEN = _config.get("slack_bot_token") or os.environ.get("SLACK_BOT_TOKEN", "")
 SLACK_STAGING_CHANNEL = "visuals-team-chat-24"
-# Only used for the on-demand /visuals-update tomorrow Slack trigger
-# (TRIGGER_SOURCE == "slack-tomorrow") — see main(). The real 6:45pm
-# cron post and the manual GitHub Actions "Run workflow" button still
-# go to SLACK_STAGING_CHANNEL, unchanged.
-SLACK_DRAFTS_CHANNEL = "visuals-daily-schedule-message-drafts"
 TEAMUP_BASE_URL = f"https://api.teamup.com/{TEAMUP_CALENDAR_KEY}"
 # Upstash Redis — used only for the daily-post dedupe lock (see acquire_daily_post_lock).
 # Reads from config.json, falls back to environment variable — same pattern as the tokens above.
@@ -663,12 +658,11 @@ def acquire_daily_post_lock(date_obj):
     is never "schedule" anymore. The caller in main() now gates on
     TRIGGER_SOURCE == "cron" instead: cron-job.org's dispatch carries
     client_payload: {"source": "cron"}, which daily-draft.yml passes through
-    as the TRIGGER_SOURCE env var. Manual workflow_dispatch runs send no
-    client_payload (TRIGGER_SOURCE is empty); the /visuals-update tomorrow
-    slash command sends {"source": "slack-tomorrow"} (see main() for why).
-    Either way TRIGGER_SOURCE != "cron", so this lock is skipped — that's
-    what lets it catch a delayed/duplicate cron hit without also blocking a
-    deliberate manual or Slack-triggered re-post on the same day.
+    as the TRIGGER_SOURCE env var. Every other trigger (manual
+    workflow_dispatch, or the /visuals-update tomorrow slash command) sends
+    no client_payload, so TRIGGER_SOURCE is empty for them and this lock is
+    skipped — that's what lets it catch a delayed/duplicate cron hit without
+    also blocking a deliberate manual re-post on the same day.
 
     Returns True if this run just claimed the lock (i.e. it should proceed
     to post). Returns False if the lock was already held by an earlier run
@@ -750,10 +744,9 @@ def main():
     # client_payload ({"source": "cron"}) — present only on the automated hit.
     nz = pytz.timezone("Pacific/Auckland")
     now_nz = datetime.now(nz)
-    # workflow_dispatch sends no client_payload (TRIGGER_SOURCE empty); the
-    # /visuals-update tomorrow slash command sends {"source": "slack-tomorrow"}
-    # (used below to pick the posting channel). Neither is "cron", so this
-    # check — and the dedupe lock below — never apply to them.
+    # workflow_dispatch and the Slack-triggered repository_dispatch send no
+    # client_payload, so TRIGGER_SOURCE is empty for them and this check —
+    # and the dedupe lock below — never apply.
     trigger_source = os.environ.get("TRIGGER_SOURCE", "")
     if trigger_source == "cron" and now_nz.hour != 18:
         print(f"Skipping — it's {now_nz.strftime('%H:%M')} NZ time, outside the 6pm posting window.")
@@ -811,12 +804,6 @@ def main():
         print(f"✓ Found '{TEAMUP_EDITING_SUBCALENDAR_NAME}' subcalendar (ID: {editing_id})")
     # Build and post the message
     message = build_draft_message(target_dates, visuals_id, editing_id)
-    # /visuals-update tomorrow is an on-demand preview, not the real daily
-    # post — route it to the drafts channel like /visuals-update,
-    # /visuals-update monday and /visuals-update sunday already do. The
-    # 6:45pm cron post and the manual GitHub Actions button still go to
-    # the live SLACK_STAGING_CHANNEL.
-    channel = SLACK_DRAFTS_CHANNEL if trigger_source == "slack-tomorrow" else SLACK_STAGING_CHANNEL
-    post_to_slack(message, channel)
+    post_to_slack(message, SLACK_STAGING_CHANNEL)
 if __name__ == "__main__":
     main()
