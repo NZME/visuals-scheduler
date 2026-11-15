@@ -626,6 +626,88 @@ def livestream_to_html(text):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# HERALD NOW LIVE CROSS FORM PARSING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+HNOW_FIELDS = [
+    "Which show",
+    "Brief",
+    "Location",
+    "Arrival time at shoot",
+    "On air time",
+    "Is the reporter attending",
+    "Reporter name if attending",
+    "Does reporter need transport from NZME",
+    "Contact on arrival",
+    "Assigning producer",
+    "B-roll required",
+]
+
+HNOW_DISPLAY_NAMES = {
+    "Which show": "Show",
+    "Brief": "Brief",
+    "Location": "Location",
+    "Arrival time at shoot": "Arrival time at shoot",
+    "On air time": "On air time",
+    "Is the reporter attending": "Reporter attending?",
+    "Reporter name if attending": "Reporter",
+    "Does reporter need transport from NZME": "Reporter needs transport?",
+    "Contact on arrival": "Contact on arrival",
+    "Assigning producer": "Assigning producer",
+    "B-roll required": "B-roll required?",
+}
+
+def is_hnow_form(text):
+    if not text:
+        return False
+    t = text.lower()
+    return "which show" in t and "arrival time at shoot" in t
+
+def extract_hnow_field(text, field_name):
+    next_fields = "|".join(re.escape(f) for f in HNOW_FIELDS if f != field_name)
+    pattern = rf"\*?{re.escape(field_name)}\*?\s*[:\?]?\*?\s*\n(.*?)(?=\n?\*?(?:{next_fields})\*?\s*[:\?]?\*?\s*\n|$)"
+    match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+    if match:
+        value = match.group(1).strip()
+        if re.fullmatch(r'\*[^*]+\*', value):
+            return ""
+        value = re.sub(r'<@[A-Z0-9]+\|([^>]+)>', r'@\1', value)
+        def _replace_bare_mention(m):
+            uid = m.group(1)
+            name = get_slack_display_name(uid)
+            return ('@' + name) if name else f'@{uid}'
+        value = re.sub(r'<@([A-Z0-9]+)>', _replace_bare_mention, value)
+        value = re.sub(r'<(https?://[^|>]+)\|([^>]+)>', r'\2', value)
+        value = re.sub(r'<(https?://[^>]+)>', r'\1', value)
+        return value.strip()
+    return ""
+
+def _get_hnow_title(text):
+    show  = extract_hnow_field(text, "Which show") or "Herald NOW"
+    brief = get_title(extract_hnow_field(text, "Brief"))
+    return f"{show} - {brief}"
+
+def hnow_to_html(text):
+    parts = ["<p>"]
+    for field in HNOW_FIELDS:
+        value = extract_hnow_field(text, field)
+        if not value:
+            continue
+        display = HNOW_DISPLAY_NAMES.get(field, field)
+        value_html = (
+            value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br>")
+        )
+        parts.append(f"<strong>{display}</strong><br>")
+        parts.append(f"{value_html}<br><br>")
+    parts.append("</p>")
+    return "\n".join(parts)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # TEAMUP
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -757,15 +839,34 @@ def process_message(msg, channel_id, processed):
             label="live stream",
             is_livestream=True,
         )
+    if is_hnow_form(text):
+        print(f"\n  New Herald NOW cross request found (ts: {ts})")
+        return _process_form(
+            ts, text, channel_id, processed,
+            title_fn=_get_hnow_title,
+            date_fn=lambda t: extract_hnow_field(t, "Arrival time at shoot"),
+            end_date_fn=lambda t: extract_hnow_field(t, "On air time"),
+            end_buffer_minutes=20,
+            location_fn=lambda t: extract_hnow_field(t, "Location"),
+            notes_fn=hnow_to_html,
+            label="Herald NOW cross",
+            is_livestream=False,
+        )
     return False
 
 
-def _process_form(ts, text, channel_id, processed, title_fn, date_fn, location_fn, notes_fn, label, is_livestream=False):
+def _process_form(ts, text, channel_id, processed, title_fn, date_fn, location_fn, notes_fn, label, is_livestream=False, end_date_fn=None, end_buffer_minutes=0):
     title    = title_fn(text)
     date_str = date_fn(text)
     location = location_fn(text)
 
-    start_dt, end_dt = parse_datetime(date_str)
+    start_dt, auto_end_dt = parse_datetime(date_str)
+    if end_date_fn:
+        end_str       = end_date_fn(text)
+        parsed_end, _ = parse_datetime(end_str)
+        end_dt        = (parsed_end + timedelta(minutes=end_buffer_minutes)) if parsed_end else auto_end_dt
+    else:
+        end_dt = auto_end_dt
     notes_html = notes_fn(text)
 
     print(f"  Title:    {title}")
